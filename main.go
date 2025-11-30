@@ -1,32 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
-	"os"
 
-	"github.com/PIPILaPUPU/finalTest/tests"
+	database "github.com/PIPILaPUPU/finalTest/pkg/db"
+	"github.com/PIPILaPUPU/finalTest/pkg/server"
 )
 
-const webDir = "./web"
-
 func main() {
-	port := tests.GetPort()
-
-	info, err := os.Stat(webDir)
-	if err != nil || !info.IsDir() {
-		log.Fatalf("Directory %s not found", webDir)
+	if err := database.Init("scheduler.db"); err != nil {
+		log.Fatalf("Ошибка инициализации БД: %v", err)
 	}
+	defer database.Close()
 
-	fileServer := http.FileServer(http.Dir(webDir))
-
-	http.Handle("/", fileServer)
-
-	addr := fmt.Sprintf(":%d", port)
-
-	log.Printf("Starting server on %s\n", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
-		log.Fatal(err)
-	}
+	server.StartServer()
 }
