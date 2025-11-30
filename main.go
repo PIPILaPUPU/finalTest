@@ -9,30 +9,24 @@ import (
 	"github.com/PIPILaPUPU/finalTest/tests"
 )
 
-const (
-	webPath = "./web"
-)
-
-func dirExists(path string) bool {
-	info, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return info.IsDir()
-}
+const webDir = "./web"
 
 func main() {
 	port := tests.GetPort()
 
-	if !dirExists(webPath) {
-		log.Fatalf("there is no such dir %s", webPath)
+	info, err := os.Stat(webDir)
+	if err != nil || !info.IsDir() {
+		log.Fatalf("Directory %s not found", webDir)
 	}
 
-	fs := http.FileServer(http.Dir(webPath))
-	http.Handle("/", fs)
+	fileServer := http.FileServer(http.Dir(webDir))
+
+	http.Handle("/", fileServer)
 
 	addr := fmt.Sprintf(":%d", port)
-	if err := http.ListenAndServe(addr, fs); err != nil {
+
+	log.Printf("Starting server on %s\n", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatal(err)
 	}
 }
