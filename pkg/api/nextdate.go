@@ -1,58 +1,98 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
-
-	"github.com/PIPILaPUPU/finalTest/pkg/scheduler"
 )
 
-// NextDateHandler обрабатывает запросы к /api/nextdate
-func NextDateHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+const DateFormat = "20060102"
+
+// NextDate — твоя функция вычисления следующей даты.
+// Здесь просто подключается готовая реализация.
+func NextDate(now time.Time, date time.Time, rule string) (time.Time, bool, error) {
+	rule = strings.TrimSpace(rule)
+
+	// Пустое правило → удалить
+	if rule == "" {
+		return time.Time{}, true, nil
 	}
 
-	// Получаем параметры из запроса
+	if strings.HasPrefix(rule, "d") {
+		parts := strings.Split(rule, " ")
+		if len(parts) != 2 {
+			return time.Time{}, false, errors.New("wrong d-rule format")
+		}
+
+		n, err := strconv.Atoi(parts[1])
+		if err != nil || n < 1 || n > 400 {
+			return time.Time{}, false, errors.New("d-rule number out of range")
+		}
+
+		next := date.AddDate(0, 0, n)
+
+		for next.Before(now) {
+			next = next.AddDate(0, 0, n)
+		}
+
+		return next, false, nil
+	}
+
+	if rule == "y" {
+		next := date.AddDate(1, 0, 0)
+
+		for next.Before(now) {
+			next = next.AddDate(1, 0, 0)
+		}
+
+		return next, false, nil
+	}
+
+	return time.Time{}, false, errors.New("unknown repeat rule")
+}
+
+func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 	nowStr := r.FormValue("now")
 	dateStr := r.FormValue("date")
-	repeat := r.FormValue("repeat")
+	rule := r.FormValue("repeat")
 
-	// Валидация обязательных параметров
-	if dateStr == "" {
-		http.Error(w, "Parameter 'date' is required", http.StatusBadRequest)
-		return
-	}
-
-	if repeat == "" {
-		http.Error(w, "Parameter 'repeat' is required", http.StatusBadRequest)
-		return
-	}
-
-	// Парсим дату now (если не указана - используем текущую)
 	var now time.Time
-	if nowStr != "" {
-		parsedNow, err := time.Parse("20060102", nowStr)
+	var err error
+
+	if nowStr == "" {
+		now = time.Now()
+	} else {
+		now, err = time.Parse(DateFormat, nowStr)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid 'now' parameter: %v", err), http.StatusBadRequest)
+			fmt.Fprint(w, "")
 			return
 		}
-		now = parsedNow
-	} else {
-		now = time.Now()
 	}
 
-	// Вычисляем следующую дату
-	nextDate, err := scheduler.NextDate(now, dateStr, repeat)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error calculating next date: %v", err), http.StatusBadRequest)
+	if dateStr == "" {
+		fmt.Fprint(w, "")
 		return
 	}
 
-	// Возвращаем результат
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(nextDate))
+	date, err := time.Parse(DateFormat, dateStr)
+	if err != nil {
+		fmt.Fprint(w, "")
+		return
+	}
+
+	next, deleteTask, err := NextDate(now, date, rule)
+	if err != nil {
+		fmt.Fprint(w, "")
+		return
+	}
+
+	if deleteTask {
+		fmt.Fprint(w, "")
+		return
+	}
+
+	fmt.Fprint(w, next.Format(DateFormat))
 }
