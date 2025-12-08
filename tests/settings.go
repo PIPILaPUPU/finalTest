@@ -8,7 +8,7 @@ import (
 var Port = GetPort()
 var DBFile = "../scheduler.db"
 var FullNextDate = false
-var Search = false
+var Search = true
 var Token = ``
 
 func GetPort() int {
