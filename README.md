@@ -14,12 +14,13 @@
 Для запуска стоит установить значение переменной окружения TODO_PORT=7540, а для TODO_PASSWORD=12345. Именно такие значения я использовал при тестировании
 
 Параметры settings:
+```
 var Port = GetPort()
 var DBFile = "../scheduler.db"
 var FullNextDate = false
 var Search = true
 var Token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwd2RfaGFzaCI6IjU5OTQ0NzFhYmIwMTExMmFmY2MxODE1OWY2Y2M3NGI0ZjUxMWI5OTgwNmRhNTliM2NhZjVhOWMxNzNjYWNmYzUiLCJleHAiOjE3NjU3NTc1MzgsImlhdCI6MTc2NTcyODczOH0.u5kKrEPEZaa2v13aVSGMJRsoXxEb7y1ScrQJHOj1OUQ`
-данный токен применялся при пароле TODO_PASSWORD=12345
+//данный токен применялся при пароле TODO_PASSWORD=12345
 
 func GetPort() int {
 	if portStr := os.Getenv("TODO_PORT"); portStr != "" {
@@ -30,7 +31,7 @@ func GetPort() int {
 
 	return 7540
 }
-
+```
 Запуск:
 Есть два способа запуска, с паролем и без него. 
 С паролем go run main.go
