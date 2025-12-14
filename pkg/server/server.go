@@ -14,7 +14,17 @@ const webDir = "./web"
 
 func StartServer() {
 	port := tests.GetPort()
-	api.Init()
+
+	password := os.Getenv("TODO_PASSWORD")
+	if password != "" {
+		log.Println("Аутентификация включена")
+	} else {
+		log.Println("Аутентификация отключена (TODO_PASSWORD не установлен)")
+	}
+
+	if err := api.Init(); err != nil {
+		log.Fatal("Failed to initialize API:", err)
+	}
 
 	info, err := os.Stat(webDir)
 	if err != nil || !info.IsDir() {
